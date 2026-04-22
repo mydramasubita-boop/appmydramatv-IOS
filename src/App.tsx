@@ -6,7 +6,6 @@ import {
   createGroup, joinGroup, pushToGroup, subscribeToGroup,
   getSavedGroupName, getSavedGroupPin, disconnectGroup, SyncData
 } from './firebase';
-import { checkForUpdate } from './updater';
 
 const lockOrientation = () => {
   const ori = screen.orientation as any;
@@ -76,7 +75,6 @@ const MyDramaApp = () => {
   const [syncError, setSyncError] = useState('');
 
   // Aggiornamenti
-  const [updateInfo, setUpdateInfo] = useState<{ version: string; downloadUrl: string; notes: string } | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const preloaderRef = useRef<HTMLVideoElement | null>(null);
@@ -229,11 +227,7 @@ const MyDramaApp = () => {
     setHistory(n); localStorage.setItem('mdl_hist', JSON.stringify(n)); pushSync(favorites, n);
   };
 
-  const downloadAndInstall = (downloadUrl: string) => {
-    (window as any).Android?.openUrl?.(downloadUrl);
-    window.open(downloadUrl, '_system');
-    setUpdateInfo(null);
-  };
+
 
   const playVideo = (project: Project, ep = 0) => {
     setPlayingProject(project); setPlaying(project); setCurrentEpisode(ep);
@@ -296,10 +290,7 @@ const MyDramaApp = () => {
     }
     setTimeout(() => setShowApp(true), 300);
 
-    checkForUpdate().then(result => {
-      if (result.hasUpdate && result.version && result.downloadUrl)
-        setUpdateInfo({ version: result.version, downloadUrl: result.downloadUrl, notes: result.notes || '' });
-    });
+
 
     return () => { if (syncUnsub.current) syncUnsub.current(); };
   }, []);
@@ -689,19 +680,7 @@ const MyDramaApp = () => {
         </div>
       )}
 
-      {/* Popup aggiornamento */}
-      {updateInfo && (
-        <div style={{ position: 'fixed', bottom: '20px', left: `${MENU_W + 12}px`, right: '12px', background: '#1a0010', border: `2px solid ${C.primary}`, borderRadius: '12px', padding: '14px', zIndex: 9998, color: 'white' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>🆕 Aggiornamento v{updateInfo.version}</p>
-            <button onClick={() => setUpdateInfo(null)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,.6)', fontSize: '18px', cursor: 'pointer' }}>×</button>
-          </div>
-          <button onClick={() => downloadAndInstall(updateInfo.downloadUrl)}
-            style={{ width: '100%', padding: '9px', background: `linear-gradient(135deg,${C.primary},${C.secondary})`, border: 'none', borderRadius: '8px', color: 'white', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
-            🔽 Scarica aggiornamento
-          </button>
-        </div>
-      )}
+
 
       {/* Modale Sync */}
       {showSyncModal && (
