@@ -577,7 +577,7 @@ const MyDramaApp = () => {
       </nav>
 
       {/* ── CONTENUTO ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ marginLeft: `${MENU_W}px`, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
         {/* Subcategorie */}
         {pagesWithSub.includes(currentPage) && (
