@@ -541,7 +541,7 @@ const MyDramaApp = () => {
       <style>{`*{-ms-overflow-style:none;scrollbar-width:none;box-sizing:border-box;}*::-webkit-scrollbar{display:none;}button,input{outline:none!important;-webkit-tap-highlight-color:transparent;}@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* ── MENU LATERALE ── */}
-      <nav style={{ width: `${MENU_W}px`, flexShrink: 0, height: '100vh', background: 'rgba(0,0,0,.95)', borderRight: `2px solid ${C.primary}`, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+      <nav style={{ width: `${MENU_W}px`, flexShrink: 0, height: '100vh', background: 'rgba(0,0,0,.95)', borderRight: `2px solid ${C.primary}`, display: 'flex', flexDirection: 'column', overflowY: 'scroll', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         <div style={{ padding: '12px 8px 8px', borderBottom: `1px solid rgba(255,255,255,.1)`, textAlign: 'center' }}>
           <img src={LOGO} alt="My Drama Life" style={{ height: '48px', width: 'auto', maxWidth: '100%' }} />
         </div>
