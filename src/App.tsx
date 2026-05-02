@@ -6,7 +6,6 @@ import {
   createGroup, joinGroup, pushToGroup, subscribeToGroup,
   getSavedGroupName, getSavedGroupPin, disconnectGroup, SyncData
 } from './firebase';
-import { checkForUpdate } from './updater';
 
 const lockOrientation = () => {
   const ori = screen.orientation as any;
@@ -65,6 +64,7 @@ const MyDramaApp = () => {
   const [showEpisodePanel, setShowEpisodePanel] = useState(false);
 
   // Sync
+  const [isPortrait, setIsPortrait] = useState(() => window.innerHeight > window.innerWidth);
   const [groupName, setGroupName] = useState<string | null>(getSavedGroupName);
   const [groupPin, setGroupPin] = useState<string | null>(getSavedGroupPin);
   const [showSyncModal, setShowSyncModal] = useState(false);
@@ -75,7 +75,6 @@ const MyDramaApp = () => {
   const [syncError, setSyncError] = useState('');
 
   // Aggiornamenti
-  const [updateInfo, setUpdateInfo] = useState<{ version: string; downloadUrl: string; notes: string } | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const preloaderRef = useRef<HTMLVideoElement | null>(null);
@@ -184,6 +183,10 @@ const MyDramaApp = () => {
   }, [favorites, history]);
 
   const pushSync = useCallback((favs: string[], hist: HistoryItem[]) => {
+    const checkOrientation = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
     const gn = getSavedGroupName();
     if (!gn) return;
     const positions: Record<string, number> = {};
@@ -224,11 +227,7 @@ const MyDramaApp = () => {
     setHistory(n); localStorage.setItem('mdl_hist', JSON.stringify(n)); pushSync(favorites, n);
   };
 
-  const downloadAndInstall = (downloadUrl: string) => {
-    (window as any).Android?.openUrl?.(downloadUrl);
-    window.open(downloadUrl, '_system');
-    setUpdateInfo(null);
-  };
+
 
   const playVideo = (project: Project, ep = 0) => {
     setPlayingProject(project); setPlaying(project); setCurrentEpisode(ep);
@@ -281,16 +280,17 @@ const MyDramaApp = () => {
     document.documentElement.style.background = '#000';
     document.body.style.background = '#000';
 
+    const checkOrientation = () => setIsPortrait(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
     const gn = getSavedGroupName();
     if (gn) {
       startGroupListener(gn);
     }
     setTimeout(() => setShowApp(true), 300);
 
-    checkForUpdate().then(result => {
-      if (result.hasUpdate && result.version && result.downloadUrl)
-        setUpdateInfo({ version: result.version, downloadUrl: result.downloadUrl, notes: result.notes || '' });
-    });
+
 
     return () => { if (syncUnsub.current) syncUnsub.current(); };
   }, []);
@@ -537,15 +537,23 @@ const MyDramaApp = () => {
   const cardMin = tablet ? '140px' : '110px';
 
   return (
+    <>
+    {isPortrait && (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.95)', zIndex: 99999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', textAlign: 'center', padding: '40px' }}>
+        <div style={{ fontSize: '64px', marginBottom: '24px' }}>📱➡️</div>
+        <p style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '12px' }}>Ruota il telefono</p>
+        <p style={{ fontSize: '15px', opacity: .7, lineHeight: '1.5' }}>My Drama Life TV funziona in orizzontale.<br/>Ruota il telefono e disattiva il blocco rotazione.</p>
+      </div>
+    )}
     <div style={{ width: '100%', height: '100vh', display: 'flex', background: `url(${BG})`, backgroundSize: 'cover', backgroundPosition: 'center', color: 'white', opacity: showApp ? 1 : 0, transition: 'opacity 0.5s' }}>
       <style>{`*{-ms-overflow-style:none;scrollbar-width:none;box-sizing:border-box;}*::-webkit-scrollbar{display:none;}button,input{outline:none!important;-webkit-tap-highlight-color:transparent;}@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* ── MENU LATERALE ── */}
-      <nav style={{ width: `${MENU_W}px`, flexShrink: 0, height: '100vh', background: 'rgba(0,0,0,.95)', borderRight: `2px solid ${C.primary}`, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' }}>
+      <nav style={{ width: `${MENU_W}px`, flexShrink: 0, position: 'fixed', top: 0, left: 0, bottom: 0, background: 'rgba(0,0,0,.95)', borderRight: `2px solid ${C.primary}`, display: 'flex', flexDirection: 'column', overflowY: 'scroll', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', zIndex: 10 } as React.CSSProperties}>
         <div style={{ padding: '12px 8px 8px', borderBottom: `1px solid rgba(255,255,255,.1)`, textAlign: 'center' }}>
           <img src={LOGO} alt="My Drama Life" style={{ height: '48px', width: 'auto', maxWidth: '100%' }} />
         </div>
-        <div style={{ flex: 1, padding: '8px 4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <div style={{ flex: 1, padding: '8px 4px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
           {menuItems.map((item) => {
             const Icon = item.Icon;
             const isAct = currentPage === item.id;
@@ -569,7 +577,7 @@ const MyDramaApp = () => {
       </nav>
 
       {/* ── CONTENUTO ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ marginLeft: `${MENU_W}px`, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
         {/* Subcategorie */}
         {pagesWithSub.includes(currentPage) && (
@@ -672,19 +680,7 @@ const MyDramaApp = () => {
         </div>
       )}
 
-      {/* Popup aggiornamento */}
-      {updateInfo && (
-        <div style={{ position: 'fixed', bottom: '20px', left: `${MENU_W + 12}px`, right: '12px', background: '#1a0010', border: `2px solid ${C.primary}`, borderRadius: '12px', padding: '14px', zIndex: 9998, color: 'white' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>🆕 Aggiornamento v{updateInfo.version}</p>
-            <button onClick={() => setUpdateInfo(null)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,.6)', fontSize: '18px', cursor: 'pointer' }}>×</button>
-          </div>
-          <button onClick={() => downloadAndInstall(updateInfo.downloadUrl)}
-            style={{ width: '100%', padding: '9px', background: `linear-gradient(135deg,${C.primary},${C.secondary})`, border: 'none', borderRadius: '8px', color: 'white', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
-            🔽 Scarica aggiornamento
-          </button>
-        </div>
-      )}
+
 
       {/* Modale Sync */}
       {showSyncModal && (
@@ -793,6 +789,7 @@ const MyDramaApp = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
